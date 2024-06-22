@@ -9,7 +9,17 @@ import { faEye, faEyeSlash, faHouse } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/navigation';
 
 // Define the form schema using zod
-const formSchema = z.object({
+// const formSchema = z.object({
+//   name: z.string().nonempty("*Name is required"),
+//   email: z.string().email("*Invalid email address"),
+//   password: z.string().min(6, "*Password should be at least 6 characters"),
+// });
+const signInSchema = z.object({
+  email: z.string().email("*Invalid email address"),
+  password: z.string().min(6, "*Password should be at least 6 characters"),
+});
+
+const signUpSchema = z.object({
   name: z.string().nonempty("*Name is required"),
   email: z.string().email("*Invalid email address"),
   password: z.string().min(6, "*Password should be at least 6 characters"),
@@ -21,16 +31,16 @@ export default function SignInSignUp() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
-  const signInForm = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const signInForm = useForm<z.infer<typeof signInSchema>>({
+    resolver: zodResolver(signInSchema),
     defaultValues: {
       email: "",
       password: ""
     }
   });
 
-  const signUpForm = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const signUpForm = useForm<z.infer<typeof signUpSchema>>({
+    resolver: zodResolver(signUpSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -38,21 +48,52 @@ export default function SignInSignUp() {
     }
   });
 
-  // Handle form submission
-  const handleSignInSubmit = (values: z.infer<typeof formSchema>) => {
+  const handleSignInSubmit = async (values: z.infer<typeof signInSchema>) => {
     console.log("Sign In:", values);
-    // Handle form submission (e.g., send data to the server)
-    setIsSubmitted(true);
-    signInForm.reset();
-    setTimeout(() => setIsSubmitted(false), 3000); // Hide notification after 3 seconds
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+  
+      if (res.status === 400) {
+        console.log("Invalid email or password");
+      } else if (res.status === 200) {
+        console.log("Logged in successfully");
+        signInForm.reset();
+      } else {
+        console.log("Error, try again");
+      }
+    } catch (error) {
+      console.log("Error, try again", error);
+    }
   };
 
-  const handleSignUpSubmit = (values: z.infer<typeof formSchema>) => {
+  const handleSignUpSubmit = async (values: z.infer<typeof signUpSchema>) => {
     console.log("Sign Up:", values);
-    // Handle form submission (e.g., send data to the server)
-    setIsSubmitted(true);
-    signUpForm.reset();
-    setTimeout(() => setIsSubmitted(false), 3000); // Hide notification after 3 seconds
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+  
+      if (res.status === 400) {
+        console.log("This email is already registered");
+      } else if (res.status === 201) {
+        console.log("User created successfully");
+        signUpForm.reset();
+      } else {
+        console.log("Error, try again");
+      }
+    } catch (error) {
+      console.log("Error, try again", error);
+    }
   };
 
   const handleOnClick = (text: string) => {
@@ -74,7 +115,7 @@ export default function SignInSignUp() {
   return (
     <div className="App">
       <style>{`
-      /* Existing styles... */
+      
   
   .text-darkturquoise {
     color: darkturquoise; /* Define the color you need */
@@ -82,8 +123,7 @@ export default function SignInSignUp() {
   }
 
   /* More styles... */
-        @import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
-
+      
         * {
           box-sizing: border-box;
         }
@@ -94,7 +134,7 @@ export default function SignInSignUp() {
           justify-content: center;
           align-items: center;
           flex-direction: column;
-          font-family: 'Montserrat', sans-serif;
+         
           height: 100vh;
           margin: -20px 0 50px;
         }
@@ -403,3 +443,4 @@ export default function SignInSignUp() {
     </div>
   );
 }
+
